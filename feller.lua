@@ -41,6 +41,10 @@ print("Press Ctrl+T to stop")
 -- Track position and orientation
 local x, y, z = 0, 0, 0  -- relative to start
 local facing = 0  -- 0=forward(+z), 1=right(+x), 2=back(-z), 3=left(-x)
+local validFuels = {
+    ["minecraft:charcoal"] = true,
+    ["minecraft:bamboo"] = true
+}
 
 local function turnRight()
     turtle.turnRight()
@@ -58,7 +62,68 @@ local function turnTo(direction)
     end
 end
 
-local function moveForward()
+local function moveSingle(diffX, diffY, diffZ, ignoreFuel)
+    if diffX > 0 then
+       turnTo(1)
+       moveForward(ignoreFuel)
+    elseif diffX < 0 then
+       turnTo(3)
+       moveForward(ignoreFuel)
+    end
+    if diffZ > 0 then
+       turnTo(0)
+       moveForward(ignoreFuel)
+    elseif diffZ < 0 then
+       turnTo(2)
+       moveForward(ignoreFuel)
+    end
+    if diffY > 0 then
+       moveUp(ignoreFuel)
+    elseif diffY < 0 then
+       moveDown(ignoreFuel)
+    end
+end
+
+local function moveSingleAxis(diffX, diffY, diffZ, ignoreFuel)
+    if diffX != 0 then
+        for val = 1, math.abs(diffX) do
+            moveSingle((diffX > 0) and 1 or -1, 0, 0, ignoreFuel)
+        end
+    end
+    if diffY != 0 then
+        for val = 1, math.abs(diffY) do
+            moveSingle(0, (diffY > 0) and 1 or -1, 0, ignoreFuel)
+        end
+    end
+    if diffZ != 0 then
+        for val = 1, math.abs(diffZ) do
+            moveSingle(0, 0, (diffZ > 0) and 1 or -1, ignoreFuel)
+        end
+    end
+end
+
+local function moveTo(targetX, targetY, targetZ, ignoreFuel)
+    if y - targetY > 0 then -- down
+        moveSingleAxis(0, targetY - y, 0, ignoreFuel)
+        moveSingleAxis(0, targetX - x, 0, ignoreFuel)
+        moveSingleAxis(0, targetZ - z, 0, ignoreFuel)
+    else -- equal or up
+        moveSingleAxis(0, targetZ - z, 0, ignoreFuel)
+        moveSingleAxis(0, targetX - x, 0, ignoreFuel)
+        moveSingleAxis(0, targetY - y, 0, ignoreFuel)
+    end
+end
+
+local function moveForward(ignoreFuel)
+    ignoreFuel = ignoreFuel or false
+    if not ignoreFuel then
+        ensureFueledAndInventorySpace()
+    end
+
+    if turtle.detect() then
+        turtle.dig()
+        blocksProcessed += 1
+    end
     if turtle.forward() then
         if facing == 0 then z = z + 1
         elseif facing == 1 then x = x + 1
@@ -70,19 +135,12 @@ local function moveForward()
     return false
 end
 
-local function moveBack()
-    if turtle.back() then
-        if facing == 0 then z = z - 1
-        elseif facing == 1 then x = x - 1
-        elseif facing == 2 then z = z + 1
-        elseif facing == 3 then x = x + 1
-        end
-        return true
-    end
-    return false
-end
-
 local function moveUp()
+    if turtle.detectUp() then
+        turtle.digUp()
+        blocksProcessed += 1
+    end
+    ensureFueledAndInventorySpace()
     if turtle.up() then
         y = y + 1
         return true
@@ -90,7 +148,17 @@ local function moveUp()
     return false
 end
 
-local function moveDown()
+local function moveDown(ignoreFuel)
+    ignoreFuel = ignoreFuel or false
+    if not ignoreFuel then
+        ensureFueledAndInventorySpace()
+    end
+
+    if turtle.detectDown() then
+        turtle.digDown()
+        blocksProcessed += 1
+    end
+    ensureFueledAndInventorySpace()
     if turtle.down() then
         y = y - 1
         return true
@@ -98,16 +166,63 @@ local function moveDown()
     return false
 end
 
-local function digForward()
-    return turtle.dig()
+local function safeReturnAndGoBack(ignoreFuel, whenDownThereDoWhat)
+    currentX = x
+    currentY = y
+    currentZ = z
+    currentFacing = facing
+    safeReturn()
+    whenDownThereDoWhat()
+    moveTo(currentX, currentY, currentZ)
+    turnTo(currentFacing)
 end
 
-local function digUp()
-    return turtle.digUp()
+local function anyEmptySlots()
+    for i = 1, 16 do
+        if turtle.getItemSpace(i) = 64 then
+            return true
+        end
+    end
+    return false
 end
 
-local function digDown()
-    return turtle.digDown()
+local function emptyIntoChest()
+    turnTo(2)
+    -- TODO: turtle.inspect() and check if it's a chest. Ideally also check for space? Else exit() with critical error message
+    for inventorySlot = 1, 16 do
+        turtle.select(inventorySlot)
+        turtle.drop()
+    end
+end
+
+local function ensureFueledAndInventorySpace()
+    local fuelLevel = turtle.getFuelLevel()
+    assert(fuelLevel > 0)
+    if fuelLevel <= 0 then
+        print("Warning: No fuel left")
+        awaitFuel()
+    elseif returnDistance() > fuelLevel
+        print("Warning: Please refuel")
+        safeReturnAndGoBack(true, awaitFuel)
+    elseif fuelLevel < 1000 then
+        print("Warning: Fuel < 1000")
+    end
+    if not anyEmptySlots() then
+        print("Warning: Inventory full")
+        safeReturnAndGoBack(true, emptyIntoChest)
+    end
+end
+
+local function awaitFuel()
+    while turtle.getFuelLevel() <= 0 do
+        for inventorySlot = 1, 16 do
+            inventoryDetail = turtle.getItemDetail(inventorySlot) -- returns: count: int, name: str
+            if inventoryDetail and validFuels[inventoryDetail.name] then
+                turtle.select(inventorySlot)
+                turtle.refuel(inventoryDetail.count)
+            end
+        end
+    end
 end
 
 local function dropInventory()
@@ -120,74 +235,50 @@ local function dropInventory()
     turtle.select(1)
 end
 
+local function returnDistance()
+    return math.abs(x) + math.abs(y) + math.abs(z)
+end
+
+local function safeReturn()
+    moveTo(0, 0, 0, true)
+end
+
 -- Main felling operation
 local function fell()
+    ensureFueledAndInventorySpaceAndInventorySpace()
     local blocksProcessed = 0
-    
-    -- Iterate through width (side to side)
-    for w = 1, width do
-        -- Iterate through depth (forward and back)
-        for d = 1, depth do
-            -- Iterate through height (up and down from ground)
-            for h = 1, height do
-                -- Dig at current level
-                digForward()
-                blocksProcessed = blocksProcessed + 1
-                
-                if h < height then
-                    moveUp()
-                end
-            end
-            
-            -- Return to ground level
-            while y > 0 do
-                moveDown()
-            end
-            
-            -- Move to next depth position
-            if d < depth then
-                if not moveForward() then
-                    print("Warning: Unable to move forward at depth position " .. d)
-                    break
-                end
-            end
-        end
-        
-        -- Reset depth: move back to starting depth position
-        while z > 0 do
-            moveBack()
-        end
-        
-        -- Move to next width position
-        if w < width then
-            -- Turn left to move along width axis
-            turnTo(3)  -- Face left (-x direction)
-            if not moveForward() then
-                print("Warning: Unable to move to next width position")
-                break
-            end
-            -- Turn back to forward (facing +z)
-            turnTo(0)
-        end
-    end
-    
-    -- Return to starting position
-    turnTo(1)  -- Face right
-    while x > 0 do
+    for h = 1, height do
         moveForward()
+        for w = 1, width do
+            for d = 1, depth - 1 do
+                moveForward()
+            end
+            if (w != width) then
+                if w % 2 then
+                    turnRight()
+                    moveForward()
+                    turnRight()
+                else
+                    turnLeft()
+                    moveForward()
+                    turnLeft()
+                end
+            end
+        end
+        if h != height then
+            moveUp()
+            turnRight()
+            turnRight()
+        end
     end
-    turnTo(0)  -- Face forward
     
-    print("Felling complete!")
+    print("Information: Felling complete")
     print(string.format("Processed approximately %d blocks", blocksProcessed))
-    
-    -- Ask if user wants to drop inventory
-    print("Drop inventory? (y/n)")
-    local input = read()
-    if input:lower() == "y" then
-        dropInventory()
-        print("Inventory dropped")
-    end
+    print("Information: Returning to start")
+    safeReturn()
+    print("Information: Emptying into chest")
+    emptyIntoChest()
+    print("Information: DONE")
 end
 
 -- Start the program
