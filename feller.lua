@@ -249,28 +249,27 @@ end
 local function fell()
     ensureFueledAndInventorySpace()
     blocksProcessed = 0
+    moveForward()
     for h = 1, height do
-        moveForward()
-        local currentWidth = (h % 2 == 1) and width or depth
-        local currentDepth = (h % 2 == 1) and depth or width
-        for w = 1, currentWidth do
-            for d = 1, currentDepth - 1 do
+        for w = 1, width do
+            for d = 1, depth do
                 moveForward()
             end
-            if (w ~= currentWidth) then
-                if w % 2 then
-                    turnRight()
+            if (w ~= width) then
+                if (w + h) % 2 then
+                    turnLeft()
                     moveForward()
-                    turnRight()
+                    turnLeft()
                 else
-                    turnLeft()
+                    turnRight()
                     moveForward()
-                    turnLeft()
+                    turnRight()
                 end
             end
         end
         if h ~= height then
             moveUp()
+            turnRight()
             turnRight()
         end
     end
