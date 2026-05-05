@@ -241,7 +241,6 @@ local function dropInventory()
     turtle.select(1)
 end
 
-
 local function safeReturn()
     moveTo(0, 0, 0, true)
 end
@@ -252,11 +251,13 @@ local function fell()
     blocksProcessed = 0
     for h = 1, height do
         moveForward()
-        for w = 1, width do
-            for d = 1, depth - 1 do
+        local currentWidth = (h % 2 == 1) and width or depth
+        local currentDepth = (h % 2 == 1) and depth or width
+        for w = 1, currentWidth do
+            for d = 1, currentDepth - 1 do
                 moveForward()
             end
-            if (w ~= width) then
+            if (w ~= currentWidth) then
                 if w % 2 then
                     turnRight()
                     moveForward()
@@ -270,7 +271,6 @@ local function fell()
         end
         if h ~= height then
             moveUp()
-            turnRight()
             turnRight()
         end
     end
