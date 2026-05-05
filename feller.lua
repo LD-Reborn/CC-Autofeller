@@ -106,11 +106,11 @@ end
 function moveTo(targetX, targetY, targetZ, ignoreFuel)
     if y - targetY > 0 then -- down
         moveSingleAxis(0, targetY - y, 0, ignoreFuel)
-        moveSingleAxis(0, targetX - x, 0, ignoreFuel)
-        moveSingleAxis(0, targetZ - z, 0, ignoreFuel)
+        moveSingleAxis(targetX - x, 0, 0, ignoreFuel)
+        moveSingleAxis(0, 0, targetZ - z, ignoreFuel)
     else -- equal or up
-        moveSingleAxis(0, targetZ - z, 0, ignoreFuel)
-        moveSingleAxis(0, targetX - x, 0, ignoreFuel)
+        moveSingleAxis(0, 0, targetZ - z, ignoreFuel)
+        moveSingleAxis(targetX - x, 0, 0, ignoreFuel)
         moveSingleAxis(0, targetY - y, 0, ignoreFuel)
     end
 end
@@ -250,7 +250,7 @@ function fell()
     ensureFueledAndInventorySpace()
     blocksProcessed = 0
     turnDirection = 0
-    moveForward()
+    moveForward() -- step into tree area
     for h = 1, height do
         for w = 1, width do
             for d = 1, depth do
