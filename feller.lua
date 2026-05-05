@@ -114,6 +114,70 @@ local function moveTo(targetX, targetY, targetZ, ignoreFuel)
     end
 end
 
+
+local function returnDistance()
+    return math.abs(x) + math.abs(y) + math.abs(z)
+end
+
+local function safeReturnAndGoBack(ignoreFuel, whenDownThereDoWhat)
+    currentX = x
+    currentY = y
+    currentZ = z
+    currentFacing = facing
+    safeReturn()
+    whenDownThereDoWhat()
+    moveTo(currentX, currentY, currentZ)
+    turnTo(currentFacing)
+end
+
+local function anyEmptySlots()
+    for i = 1, 16 do
+        if turtle.getItemSpace(i) == 64 then
+            return true
+        end
+    end
+    return false
+end
+
+local function emptyIntoChest()
+    turnTo(2)
+    -- TODO: turtle.inspect() and check if it's a chest. Ideally also check for space? Else exit() with critical error message
+    for inventorySlot = 1, 16 do
+        turtle.select(inventorySlot)
+        turtle.drop()
+    end
+end
+
+local function awaitFuel()
+    while turtle.getFuelLevel() <= 0 do
+        for inventorySlot = 1, 16 do
+            inventoryDetail = turtle.getItemDetail(inventorySlot) -- returns: count: int, name: str
+            if inventoryDetail and validFuels[inventoryDetail.name] then
+                turtle.select(inventorySlot)
+                turtle.refuel(inventoryDetail.count)
+            end
+        end
+    end
+end
+
+local function ensureFueledAndInventorySpace()
+    local fuelLevel = turtle.getFuelLevel()
+    assert(fuelLevel > 0)
+    if fuelLevel <= 0 then
+        print("Warning: No fuel left")
+        awaitFuel()
+    elseif returnDistance() > fuelLevel then
+        print("Warning: Please refuel")
+        safeReturnAndGoBack(true, awaitFuel)
+    elseif fuelLevel < 1000 then
+        print("Warning: Fuel < 1000")
+    end
+    if not anyEmptySlots() then
+        print("Warning: Inventory full")
+        safeReturnAndGoBack(true, emptyIntoChest)
+    end
+end
+
 local function moveForward(ignoreFuel)
     ignoreFuel = ignoreFuel or false
     if not ignoreFuel then
@@ -166,65 +230,6 @@ local function moveDown(ignoreFuel)
     return false
 end
 
-local function safeReturnAndGoBack(ignoreFuel, whenDownThereDoWhat)
-    currentX = x
-    currentY = y
-    currentZ = z
-    currentFacing = facing
-    safeReturn()
-    whenDownThereDoWhat()
-    moveTo(currentX, currentY, currentZ)
-    turnTo(currentFacing)
-end
-
-local function anyEmptySlots()
-    for i = 1, 16 do
-        if turtle.getItemSpace(i) = 64 then
-            return true
-        end
-    end
-    return false
-end
-
-local function emptyIntoChest()
-    turnTo(2)
-    -- TODO: turtle.inspect() and check if it's a chest. Ideally also check for space? Else exit() with critical error message
-    for inventorySlot = 1, 16 do
-        turtle.select(inventorySlot)
-        turtle.drop()
-    end
-end
-
-local function ensureFueledAndInventorySpace()
-    local fuelLevel = turtle.getFuelLevel()
-    assert(fuelLevel > 0)
-    if fuelLevel <= 0 then
-        print("Warning: No fuel left")
-        awaitFuel()
-    elseif returnDistance() > fuelLevel
-        print("Warning: Please refuel")
-        safeReturnAndGoBack(true, awaitFuel)
-    elseif fuelLevel < 1000 then
-        print("Warning: Fuel < 1000")
-    end
-    if not anyEmptySlots() then
-        print("Warning: Inventory full")
-        safeReturnAndGoBack(true, emptyIntoChest)
-    end
-end
-
-local function awaitFuel()
-    while turtle.getFuelLevel() <= 0 do
-        for inventorySlot = 1, 16 do
-            inventoryDetail = turtle.getItemDetail(inventorySlot) -- returns: count: int, name: str
-            if inventoryDetail and validFuels[inventoryDetail.name] then
-                turtle.select(inventorySlot)
-                turtle.refuel(inventoryDetail.count)
-            end
-        end
-    end
-end
-
 local function dropInventory()
     for slot = 1, 16 do
         if turtle.getItemCount(slot) > 0 then
@@ -235,9 +240,6 @@ local function dropInventory()
     turtle.select(1)
 end
 
-local function returnDistance()
-    return math.abs(x) + math.abs(y) + math.abs(z)
-end
 
 local function safeReturn()
     moveTo(0, 0, 0, true)
@@ -245,7 +247,7 @@ end
 
 -- Main felling operation
 local function fell()
-    ensureFueledAndInventorySpaceAndInventorySpace()
+    ensureFueledAndInventorySpace()
     local blocksProcessed = 0
     for h = 1, height do
         moveForward()
