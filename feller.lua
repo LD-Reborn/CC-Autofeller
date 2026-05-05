@@ -21,6 +21,7 @@ end
 local depth = tonumber(args[1])
 local width = tonumber(args[2])
 local height = tonumber(args[3])
+local blocksProcessed = 0
 
 -- Validate input
 if not depth or not width or not height then
@@ -248,7 +249,7 @@ end
 -- Main felling operation
 local function fell()
     ensureFueledAndInventorySpace()
-    local blocksProcessed = 0
+    blocksProcessed = 0
     for h = 1, height do
         moveForward()
         for w = 1, width do
