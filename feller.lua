@@ -1,10 +1,10 @@
 -- ComputerCraft Felling Turtle Program
--- Usage: fell <depth> <width> <height>
+-- Usage: fell [depth] [width] [height]
 -- Example: fell 10 5 8
 -- This will fell an area 10 blocks deep, 5 blocks wide, and 8 blocks high
 
 local function printUsage()
-    print("Usage: fell <depth> <width> <height>")
+    print("Usage: fell [depth] [width] [height]")
     print("Example: fell 10 5 8")
     print("  depth:  How far forward to fell (blocks)")
     print("  width:  How wide the area is (blocks)")
