@@ -122,7 +122,7 @@ local function moveForward(ignoreFuel)
 
     if turtle.detect() then
         turtle.dig()
-        blocksProcessed += 1
+        blocksProcessed = blocksProcessed + 1
     end
     if turtle.forward() then
         if facing == 0 then z = z + 1
@@ -138,7 +138,7 @@ end
 local function moveUp()
     if turtle.detectUp() then
         turtle.digUp()
-        blocksProcessed += 1
+        blocksProcessed = blocksProcessed + 1
     end
     ensureFueledAndInventorySpace()
     if turtle.up() then
@@ -156,7 +156,7 @@ local function moveDown(ignoreFuel)
 
     if turtle.detectDown() then
         turtle.digDown()
-        blocksProcessed += 1
+        blocksProcessed = blocksProcessed + 1
     end
     ensureFueledAndInventorySpace()
     if turtle.down() then
