@@ -257,7 +257,7 @@ local function fell()
                 moveForward()
             end
             if (w ~= width) then
-                if turnDirection % 2 then
+                if turnDirection % 2 == 1 then
                     turnLeft()
                     moveForward()
                     turnLeft()
@@ -271,7 +271,6 @@ local function fell()
         end
         if h ~= height then
             moveUp()
-            turnDirection = turnDirection + 1
             turnRight()
             turnRight()
         end
