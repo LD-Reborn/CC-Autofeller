@@ -47,6 +47,9 @@ local validFuels = {
     ["minecraft:bamboo"] = true
 }
 
+-- Forward declarations (to allow functions to call each other)
+local moveForward, moveUp, moveDown, moveSingle, moveSingleAxis, moveTo, safeReturn, ensureFueledAndInventorySpace, emptyIntoChest, awaitFuel, safeReturnAndGoBack, anyEmptySlots, returnDistance
+
 local function turnRight()
     turtle.turnRight()
     facing = (facing + 1) % 4
