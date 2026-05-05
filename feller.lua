@@ -282,6 +282,7 @@ function fell()
     safeReturn()
     print("Information: Emptying into chest")
     emptyIntoChest()
+    turnTo(0)
     print("Information: DONE")
 end
 
