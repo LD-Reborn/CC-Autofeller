@@ -249,6 +249,7 @@ end
 local function fell()
     ensureFueledAndInventorySpace()
     blocksProcessed = 0
+    turnDirection = 0
     moveForward()
     for h = 1, height do
         for w = 1, width do
@@ -256,7 +257,7 @@ local function fell()
                 moveForward()
             end
             if (w ~= width) then
-                if (w + h) % 2 then
+                if turnDirection % 2 then
                     turnLeft()
                     moveForward()
                     turnLeft()
@@ -265,10 +266,12 @@ local function fell()
                     moveForward()
                     turnRight()
                 end
+                turnDirection = turnDirection + 1
             end
         end
         if h ~= height then
             moveUp()
+            turnDirection = turnDirection + 1
             turnRight()
             turnRight()
         end
