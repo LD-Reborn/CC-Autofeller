@@ -85,17 +85,17 @@ local function moveSingle(diffX, diffY, diffZ, ignoreFuel)
 end
 
 local function moveSingleAxis(diffX, diffY, diffZ, ignoreFuel)
-    if diffX != 0 then
+    if diffX ~= 0 then
         for val = 1, math.abs(diffX) do
             moveSingle((diffX > 0) and 1 or -1, 0, 0, ignoreFuel)
         end
     end
-    if diffY != 0 then
+    if diffY ~= 0 then
         for val = 1, math.abs(diffY) do
             moveSingle(0, (diffY > 0) and 1 or -1, 0, ignoreFuel)
         end
     end
-    if diffZ != 0 then
+    if diffZ ~= 0 then
         for val = 1, math.abs(diffZ) do
             moveSingle(0, 0, (diffZ > 0) and 1 or -1, ignoreFuel)
         end
@@ -253,7 +253,7 @@ local function fell()
             for d = 1, depth - 1 do
                 moveForward()
             end
-            if (w != width) then
+            if (w ~= width) then
                 if w % 2 then
                     turnRight()
                     moveForward()
@@ -265,7 +265,7 @@ local function fell()
                 end
             end
         end
-        if h != height then
+        if h ~= height then
             moveUp()
             turnRight()
             turnRight()
