@@ -47,26 +47,23 @@ local validFuels = {
     ["minecraft:bamboo"] = true
 }
 
--- Forward declarations (to allow functions to call each other)
-local moveForward, moveUp, moveDown, moveSingle, moveSingleAxis, moveTo, safeReturn, ensureFueledAndInventorySpace, emptyIntoChest, awaitFuel, safeReturnAndGoBack, anyEmptySlots, returnDistance
-
-local function turnRight()
+function turnRight()
     turtle.turnRight()
     facing = (facing + 1) % 4
 end
 
-local function turnLeft()
+function turnLeft()
     turtle.turnLeft()
     facing = (facing - 1) % 4
 end
 
-local function turnTo(direction)
+function turnTo(direction)
     while facing ~= direction do
         turnRight()
     end
 end
 
-local function moveSingle(diffX, diffY, diffZ, ignoreFuel)
+function moveSingle(diffX, diffY, diffZ, ignoreFuel)
     if diffX > 0 then
        turnTo(1)
        moveForward(ignoreFuel)
@@ -88,7 +85,7 @@ local function moveSingle(diffX, diffY, diffZ, ignoreFuel)
     end
 end
 
-local function moveSingleAxis(diffX, diffY, diffZ, ignoreFuel)
+function moveSingleAxis(diffX, diffY, diffZ, ignoreFuel)
     if diffX ~= 0 then
         for val = 1, math.abs(diffX) do
             moveSingle((diffX > 0) and 1 or -1, 0, 0, ignoreFuel)
@@ -106,7 +103,7 @@ local function moveSingleAxis(diffX, diffY, diffZ, ignoreFuel)
     end
 end
 
-local function moveTo(targetX, targetY, targetZ, ignoreFuel)
+function moveTo(targetX, targetY, targetZ, ignoreFuel)
     if y - targetY > 0 then -- down
         moveSingleAxis(0, targetY - y, 0, ignoreFuel)
         moveSingleAxis(0, targetX - x, 0, ignoreFuel)
@@ -119,11 +116,11 @@ local function moveTo(targetX, targetY, targetZ, ignoreFuel)
 end
 
 
-local function returnDistance()
+function returnDistance()
     return math.abs(x) + math.abs(y) + math.abs(z)
 end
 
-local function safeReturnAndGoBack(ignoreFuel, whenDownThereDoWhat)
+function safeReturnAndGoBack(ignoreFuel, whenDownThereDoWhat)
     currentX = x
     currentY = y
     currentZ = z
@@ -134,7 +131,7 @@ local function safeReturnAndGoBack(ignoreFuel, whenDownThereDoWhat)
     turnTo(currentFacing)
 end
 
-local function anyEmptySlots()
+function anyEmptySlots()
     for i = 1, 16 do
         if turtle.getItemSpace(i) == 64 then
             return true
@@ -143,7 +140,7 @@ local function anyEmptySlots()
     return false
 end
 
-local function emptyIntoChest()
+function emptyIntoChest()
     turnTo(2)
     -- TODO: turtle.inspect() and check if it's a chest. Ideally also check for space? Else exit() with critical error message
     for inventorySlot = 1, 16 do
@@ -152,7 +149,7 @@ local function emptyIntoChest()
     end
 end
 
-local function awaitFuel()
+function awaitFuel()
     while turtle.getFuelLevel() <= 0 do
         for inventorySlot = 1, 16 do
             inventoryDetail = turtle.getItemDetail(inventorySlot) -- returns: count: int, name: str
@@ -164,7 +161,7 @@ local function awaitFuel()
     end
 end
 
-local function ensureFueledAndInventorySpace()
+function ensureFueledAndInventorySpace()
     local fuelLevel = turtle.getFuelLevel()
     assert(fuelLevel > 0)
     if fuelLevel <= 0 then
@@ -182,7 +179,7 @@ local function ensureFueledAndInventorySpace()
     end
 end
 
-local function moveForward(ignoreFuel)
+function moveForward(ignoreFuel)
     ignoreFuel = ignoreFuel or false
     if not ignoreFuel then
         ensureFueledAndInventorySpace()
@@ -203,7 +200,7 @@ local function moveForward(ignoreFuel)
     return false
 end
 
-local function moveUp()
+function moveUp()
     if turtle.detectUp() then
         turtle.digUp()
         blocksProcessed = blocksProcessed + 1
@@ -216,7 +213,7 @@ local function moveUp()
     return false
 end
 
-local function moveDown(ignoreFuel)
+function moveDown(ignoreFuel)
     ignoreFuel = ignoreFuel or false
     if not ignoreFuel then
         ensureFueledAndInventorySpace()
@@ -234,7 +231,7 @@ local function moveDown(ignoreFuel)
     return false
 end
 
-local function dropInventory()
+function dropInventory()
     for slot = 1, 16 do
         if turtle.getItemCount(slot) > 0 then
             turtle.select(slot)
@@ -244,12 +241,12 @@ local function dropInventory()
     turtle.select(1)
 end
 
-local function safeReturn()
+function safeReturn()
     moveTo(0, 0, 0, true)
 end
 
 -- Main felling operation
-local function fell()
+function fell()
     ensureFueledAndInventorySpace()
     blocksProcessed = 0
     turnDirection = 0
